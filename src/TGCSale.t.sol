@@ -121,7 +121,24 @@ contract TGCSaleTest is DSTest, DSExec {
     }
 
 
-    function testFailSoftLimit() {
+    function testPostponeStartTime(){
+
+        assertEq(sale.startTime(), now );
+        assertEq(sale.endTime(), now + 14 days);
+
+        sale.setStartTime(now + 2 days);
+
+        assertEq(sale.startTime(), now + 2 days);
+        assertEq(sale.endTime(), now + 16 days);
+    }
+
+
+    function testFailAfterPause() {
+        sale.pauseContribution();
+        exec(sale, 100 ether);
+    }
+
+    function testEndTimeAfterSoftLimit(){
 
         // normal sell is 14 days
         assertEq(sale.endTime(), now + 14 days);
@@ -132,6 +149,11 @@ contract TGCSaleTest is DSTest, DSExec {
 
         // 24 hours left for sell
         assertEq(sale.endTime(), now + 24 hours);
+    }
+
+    function testFailSoftLimit() {
+
+        exec(sale, 50000 ether);
 
         sale.addTime(24 hours);
 
@@ -143,7 +165,6 @@ contract TGCSaleTest is DSTest, DSExec {
 
         // hit hard limit
         exec(sale, 100000 ether);
-        assertEq(tgc.balanceOf(this), 200000 * 100000 ether);
 
         // sell is finished
         exec(sale, 1 ether);

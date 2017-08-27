@@ -77,7 +77,7 @@ contract TGCSale is DSAuth, DSMath, DSNote, DSExec {
 
     function() payable notPaused note {
 
-//        require(!isContract(msg.sender));
+        //require(!isContract(msg.sender));
         require(msg.value >= 0.01 ether);
         require(tx.gasprice <= MAX_GAS_PRICE);
 
@@ -113,7 +113,7 @@ contract TGCSale is DSAuth, DSMath, DSNote, DSExec {
     }
 
     function setStartTime(uint startTime_) auth note{
-        require(time() < startTime && time() < startTime_);
+        require(time() <= startTime && time() <= startTime_);
 
         startTime = startTime_;
         endTime = startTime + 14 days;
