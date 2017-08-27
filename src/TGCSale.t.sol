@@ -132,6 +132,27 @@ contract TGCSaleTest is DSTest, DSExec {
         assertEq(sale.endTime(), now + 16 days);
     }
 
+    function testFinalize() {
+
+        // sell 70000 ether, remains 30000 ether
+        exec(sale, 70000 ether);
+
+
+        sale.addTime(14 days);
+
+
+        assertEq(tgc.balanceOf(sale), 30000 * 200000 * (10**18) );
+        assertEq(tgc.balanceOf(tgcFoundation), ( (10 ** 11) * 80 / 100 ) * (10**18) );
+
+        sale.finalize();
+
+        assertEq(tgc.balanceOf(sale), 0 );
+        assertEq(tgc.balanceOf(tgcFoundation), ( (10 ** 11) * 80 / 100 + 30000 * 200000) * (10**18) );
+
+        assertEq(tgcFoundation.balance, 70000 ether);
+
+    }
+
 
     function testFailAfterPause() {
         sale.pauseContribution();
