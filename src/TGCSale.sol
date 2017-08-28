@@ -15,10 +15,8 @@ contract TGCSale is DSAuth, DSMath, DSNote, DSExec {
     // TGC PRICES (ETH/TGC)
     uint public constant PUBLIC_SALE_PRICE = 200000;
 
-
     // test
     //uint128 public constant TOTAL_SUPPLY = (10 ** 6) * (10 ** 18);  // 100 billion TGC in total
-
     uint128 public constant TOTAL_SUPPLY = (10 ** 11) * (10 ** 18);  // 100 billion TGC in total
 
 
@@ -60,7 +58,7 @@ contract TGCSale is DSAuth, DSMath, DSNote, DSExec {
         endTime = startTime + 14 days;
 
         tgc.mint(TOTAL_SUPPLY);
-        //tgc.setOwner(destFoundation);
+
         tgc.authTransfer(destFoundation, FUTURE_DISTRIBUTE_LIMIT);
 
         //disable transfer
@@ -130,10 +128,6 @@ contract TGCSale is DSAuth, DSMath, DSNote, DSExec {
 
         startTime = startTime_;
         endTime = startTime + 14 days;
-    }
-
-    function forceEndTime() auth {
-        endTime = time();
     }
 
     function finalize() auth note{
