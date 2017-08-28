@@ -15,7 +15,13 @@ contract TGCSale is DSAuth, DSMath, DSNote, DSExec {
     // TGC PRICES (ETH/TGC)
     uint public constant PUBLIC_SALE_PRICE = 200000;
 
+
+    // test
+    //uint128 public constant TOTAL_SUPPLY = (10 ** 6) * (10 ** 18);  // 100 billion TGC in total
+
     uint128 public constant TOTAL_SUPPLY = (10 ** 11) * (10 ** 18);  // 100 billion TGC in total
+
+
     uint128 public constant SELL_SOFT_LIMIT = TOTAL_SUPPLY * 10 / 100; // soft limit is 10%
     uint128 public constant SELL_HARD_LIMIT = TOTAL_SUPPLY * 20 / 100; // hard limit is 20%
 
@@ -54,8 +60,11 @@ contract TGCSale is DSAuth, DSMath, DSNote, DSExec {
         endTime = startTime + 14 days;
 
         tgc.mint(TOTAL_SUPPLY);
-        tgc.setOwner(destFoundation);
-        tgc.transfer(destFoundation, FUTURE_DISTRIBUTE_LIMIT);
+        //tgc.setOwner(destFoundation);
+        tgc.authTransfer(destFoundation, FUTURE_DISTRIBUTE_LIMIT);
+
+        //disable transfer
+        tgc.stop();
 
         paused = false;
         moreThanSoftLimit = false;
@@ -100,7 +109,11 @@ contract TGCSale is DSAuth, DSMath, DSNote, DSExec {
             endTime = time() + 24 hours; // last 24 hours after soft limit,
         }
 
-        tgc.transfer(msg.sender, requested);
+        if ( sold == SELL_HARD_LIMIT) {
+            endTime = time();
+        }
+
+        tgc.authTransfer(msg.sender, requested);
         exec(destFoundation, msg.value); // send the ETH to multisig
     }
 
@@ -119,18 +132,27 @@ contract TGCSale is DSAuth, DSMath, DSNote, DSExec {
         endTime = startTime + 14 days;
     }
 
-    function finalize() auth note{
-        require(time() > endTime);
-
-        uint256 unsold = sub(SELL_HARD_LIMIT,sold);
-
-        if(unsold > 0){
-            tgc.transfer(destFoundation, unsold);
-        }
+    function forceEndTime() auth {
+        endTime = time();
     }
 
-    // TBD:
-    // it seems we can't disable token transfer during ICO phase
+    function finalize() auth note{
+        require(time() >= endTime);
+
+        uint256 unsold = sub(SELL_HARD_LIMIT, sold);
+
+        if(unsold > 0){
+            tgc.authTransfer(destFoundation, unsold);
+        }
+
+        // enable transfer
+        tgc.start();
+
+        // owner -> destFoundation
+        tgc.setOwner(destFoundation);
+    }
+
+    // disable token transfer
     function freezeToken() auth note{
         tgc.stop();
     }

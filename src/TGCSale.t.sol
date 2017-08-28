@@ -23,6 +23,10 @@ contract TGCSaleUser is DSExec {
     function doBuy(uint wad) {
         exec(sale, wad);
     }
+
+    function doTransfer(address to, uint256 amount) returns (bool){
+        return tgc.transfer(to, amount);
+    }
 }
 
 contract TGCOwner {
@@ -38,6 +42,8 @@ contract TGCOwner {
     function doStop() {
         tgc.stop();
     }
+
+
 
     function() payable {}
 }
@@ -66,6 +72,7 @@ contract TGCSaleTest is DSTest, DSExec {
     TGCOwner tgcFoundation;
 
     TGCSaleUser user1;
+    TGCSaleUser user2;
 
 
     function setUp() {
@@ -77,11 +84,13 @@ contract TGCSaleTest is DSTest, DSExec {
 
         user1 = new TGCSaleUser(sale);
         exec(user1, 600 ether);
+
+        user2 = new TGCSaleUser(sale);
+        exec(user2, 600 ether);
+
     }
 
-    function testTokenOwnership() {
-        tgcFoundation.doStop();
-    }
+
 
     function testTGCSaleToken() {
         assertEq(tgc.balanceOf(sale), (10 ** 11)*(10 ** 18) * 20 / 100 );
@@ -137,7 +146,6 @@ contract TGCSaleTest is DSTest, DSExec {
         // sell 70000 ether, remains 30000 ether
         exec(sale, 70000 ether);
 
-
         sale.addTime(14 days);
 
 
@@ -153,6 +161,37 @@ contract TGCSaleTest is DSTest, DSExec {
 
     }
 
+    function testTokenOwnershipBeforeFinalize() {
+
+        sale.freezeToken();
+    }
+
+    function testTokenOwnershipAfterFinalize() {
+
+        sale.addTime(14 days);
+
+        sale.finalize();
+        tgcFoundation.doStop();
+    }
+
+    function testTransferAfterFinalize() {
+        user1.doBuy(1 ether);
+        assertEq(tgc.balanceOf(user1), 200000 * 1 ether);
+
+        sale.addTime(14 days);
+        sale.finalize();
+
+        assert(user1.doTransfer(user2, 200000 * 1 ether));
+
+        assertEq(tgc.balanceOf(user1), 0);
+        assertEq(tgc.balanceOf(user2), 200000 * 1 ether);
+
+    }
+
+    function testFailTransferBeforeFinalize() {
+        user1.doBuy(1 ether);
+        assert(user1.doTransfer(user2, 200000 * 1 ether));
+    }
 
     function testFailAfterPause() {
         sale.pauseContribution();
